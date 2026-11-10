@@ -1,52 +1,21 @@
-import os
-import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, ContextTypes
+import requests
 
-# Enable logging
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
-logger = logging.getLogger(__name__)
-
-# Khmer Welcome Message
-WELCOME_TEXT = (
-    "សូមស្វាគមន៍មកវេបសាយធំបំផុត ងាយស្រួលលេង📲 និងគួរឱ្យទុកចិត្តបំផុតនៅកម្ពុជា🔥"
-    "សេវាកម្ម២៤ម៉ោង: https://t.me/Sdrservice24h"
-)
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Inline button linking directly to your Telegram service
-    keyboard = [
-        [
-            InlineKeyboardButton(
-                "💬 សេវាកម្ម២៤ម៉ោង (Contact Support)", 
-                url="https://t.me/Sdrservice24h"
-            )
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
-    await update.message.reply_text(
-        text=WELCOME_TEXT,
-        reply_markup=reply_markup,
-        disable_web_page_preview=False
-    )
-
-def main() -> None:
-    # Get Bot Token from Render Environment Variable
-    token = os.environ.get("BOT_TOKEN")
-    if not token:
-        raise ValueError("No BOT_TOKEN provided in Environment Variables!")
-
-    # Build Application
-    application = Application.builder().token(token).build()
-
-    # Register /start command handler
-    application.add_handler(CommandHandler("start", start))
-
-    # Start Polling
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
-
-if __name__ == "__main__":
-    main()
+def get_forex_news(update, context):
+    try:
+        # Replace with your actual Forex API endpoint and key
+        response = requests.get("https://api.yourforexsource.com/news", timeout=10)
+        
+        # Check if the request was successful
+        if response.status_code == 200:
+            data = response.json()
+            # Parse your data here and send it to the user
+            news_text = f"Latest News: {data['headline']}"
+            context.bot.send_message(chat_id=update.effective_chat.id, text=news_text)
+        else:
+            # This logs the specific failure code instead of crashing silently
+            print(f"API Error Code: {response.status_code}")
+            context.bot.send_message(chat_id=update.effective_chat.id, text="Temporarily unable to fetch market updates.")
+            
+    except Exception as e:
+        print(f"Error fetching forex news: {e}")
+        context.bot.send_message(chat_id=update.effective_chat.id, text="Failed to retrieve Forex news at the moment.")
